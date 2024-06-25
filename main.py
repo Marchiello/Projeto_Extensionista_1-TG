@@ -1,5 +1,8 @@
+import os
 import tkinter as tk
 from tkinter import ttk
+arquivo = open("cadastrados.txt", "r")
+
 
 class Interface:
     def __init__(self, root):
@@ -65,7 +68,7 @@ class Interface:
         self.combo_cadastrado = ttk.Combobox(root, width=28, state="readonly")  # Cadastrado
         self.combo_cadastrado.grid(row=1, column=3, padx=5, pady=5, sticky=tk.W)
 
-        self.carregar = tk.Button(root, text="Carregar", command=self.carregar_inscrito)  # Carregar
+        self.carregar = tk.Button(root, text="Carregar", command=self.fullLoad)  # Carregar
         self.carregar.grid(row=1, column=4)
 
         self.label_dataNasc = tk.Label(root, text="Data de Nascimento:")
@@ -133,7 +136,7 @@ class Interface:
                                       offvalue=0, command=direcao)
         self.goodEnd.grid(row=8, column=5, columnspan=2, padx=15, pady=12, sticky=tk.W)  # Dispensado
 
-        self.salvar = tk.Button(root, text="Salvar", command=self.salvar_dados)
+        self.salvar = tk.Button(root, text="Salvar", command=self.fullSave)
         self.salvar.grid(row=9, column=2, padx=15, pady=12, sticky=tk.W)  # Salvar
 
         self.limpar = tk.Button(root, text="Limpar", command=self.limpar_dados)
@@ -172,7 +175,6 @@ class Interface:
         self.selecionado.set(0)
         self.dispensado.set(0)
         self.entry_numeroPassagens.delete(0, tk.END)
-        # self.entry_condicaoSaude.delete(0, tk.END)
 
     def salvar_dados(self):
         inscrito = {
@@ -189,7 +191,8 @@ class Interface:
             'preSelecionado': self.preSelecionado.get(),
             'selecionado': self.selecionado.get(),
             'dispensado': self.dispensado.get(),
-            'numeroPassagens': self.entry_numeroPassagens.get()
+            'numeroPassagens': self.entry_numeroPassagens.get(),
+            'numeroFilhos': self.entry_numeroFilhos.get(),
         }
         self.inscritos.append(inscrito)
         self.combo_cadastrado['values'] = [insc['nome'] for insc in self.inscritos]
@@ -228,8 +231,64 @@ class Interface:
                 self.dispensado.set(inscrito['dispensado'])
                 self.entry_numeroPassagens.delete(0, tk.END)
                 self.entry_numeroPassagens.insert(0, inscrito['numeroPassagens'])
+                self.entry_numeroFilhos.delete(0, tk.END)
+                self.entry_numeroFilhos.insert(0, inscrito['numeroFilhos'])
                 break
 
+    def salvarDadosArquivo(self):
+        with open("cadastrados.txt", "w") as file:
+            for inscrito in self.inscritos:
+                file.write(','.join([
+                    inscrito['nome'],
+                    inscrito['cpf'],
+                    inscrito['RG'],
+                    inscrito['dataNascimento'],
+                    inscrito['cidadeNatal'],
+                    inscrito['altura'],
+                    inscrito['peso'],
+                    inscrito['escolaridade'],
+                    inscrito['profissao'],
+                    str(inscrito['souApto']),
+                    str(inscrito['preSelecionado']),
+                    str(inscrito['selecionado']),
+                    str(inscrito['dispensado']),
+                    inscrito['numeroPassagens'],
+                    inscrito['numeroFilhos']
+                ]) + '\n')
+
+    def carregarDadosArquivo(self):
+        if os.path.exists("cadastrados.txt"):
+            with open("cadastrados.txt", "r") as file:
+                self.inscritos = []
+                for line in file:
+                    dados = line.strip().split(',')
+                    inscrito = {
+                        'nome': dados[0],
+                        'cpf': dados[1],
+                        'RG': dados[2],
+                        'dataNascimento': dados[3],
+                        'cidadeNatal': dados[4],
+                        'altura': dados[5],
+                        'peso': dados[6],
+                        'escolaridade': dados[7],
+                        'profissao': dados[8],
+                        'souApto': int(dados[9]),
+                        'preSelecionado': int(dados[10]),
+                        'selecionado': int(dados[11]),
+                        'dispensado': int(dados[12]),
+                        'numeroPassagens': dados[13],
+                        'numeroFilhos': dados[14]
+                    }
+                    self.inscritos.append(inscrito)
+                self.combo_cadastrado['values'] = [insc['nome'] for insc in self.inscritos]
+
+    def fullSave(self):
+        self.salvar_dados()
+        self.salvarDadosArquivo()
+
+    def fullLoad(self):
+        self.carregarDadosArquivo()
+        self.carregar_inscrito()
 
 root = tk.Tk()
 app = Interface(root)
